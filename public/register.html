@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Request Access — Applegarth Health and Safety Portal</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a2e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AHS Portal">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f3; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; }
+  .brand { text-align: center; margin-bottom: 1.5rem; }
+  .brand-logo { display: inline-flex; align-items: center; gap: 10px; color: #1a2e1a; font-size: 1.25rem; font-weight: 600; text-decoration: none; }
+  .brand-dot { width: 10px; height: 10px; background: #2e7d3a; border-radius: 50%; }
+  .brand-sub { font-size: 0.8rem; color: #5a7060; margin-top: 4px; letter-spacing: 0.5px; }
+  .card { background: #fff; border: 1px solid #d8e4d8; border-radius: 12px; padding: 2rem; width: 100%; max-width: 420px; }
+  .card h1 { font-size: 1.2rem; color: #1a2e1a; margin-bottom: 0.25rem; }
+  .card > p { font-size: 0.85rem; color: #5a7060; margin-bottom: 1.5rem; }
+  label { display: block; font-size: 0.8rem; font-weight: 600; color: #2a3d2a; margin-bottom: 5px; }
+  input, select { width: 100%; padding: 10px 12px; border: 1px solid #c5d6c5; border-radius: 7px; font-size: 0.9rem; color: #1a2e1a; background: #fff; margin-bottom: 1rem; outline: none; transition: border-color 0.15s; }
+  input:focus, select:focus { border-color: #2e7d3a; box-shadow: 0 0 0 3px rgba(46,125,58,0.1); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .btn { width: 100%; padding: 11px; background: #1a2e1a; color: #fff; border: none; border-radius: 7px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .btn:hover { background: #2e7d3a; }
+  .btn:disabled { background: #8aaa8a; cursor: not-allowed; }
+  .note { background: #f0f7f0; border: 1px solid #c5d6c5; border-radius: 7px; padding: 10px 12px; font-size: 0.82rem; color: #2a5c2a; margin-bottom: 1.25rem; line-height: 1.5; }
+  .error { background: #fdf0f0; border: 1px solid #f5c0c0; color: #9b2c2c; border-radius: 7px; padding: 10px 12px; font-size: 0.83rem; margin-bottom: 1rem; display: none; }
+  .success { background: #f0f7f0; border: 1px solid #a3c9a3; color: #1a5c1a; border-radius: 7px; padding: 16px; font-size: 0.9rem; display: none; text-align: center; line-height: 1.6; }
+  .link-row { text-align: center; margin-top: 1.25rem; font-size: 0.83rem; color: #5a7060; }
+  .link-row a { color: #2e7d3a; text-decoration: none; font-weight: 600; }
+  .link-row a:hover { text-decoration: underline; }
+  .divider { border: none; border-top: 1px solid #e4ede4; margin: 1.25rem 0; }
+  .required { color: #e04040; }
+</style>
+</head>
+<body>
+<div class="brand">
+  <div class="brand-logo"><span class="brand-dot"></span>Applegarth Health &amp; Safety</div>
+  <div class="brand-sub">CLIENT PORTAL</div>
+</div>
+
+<div class="card">
+  <h1>Request portal access</h1>
+  <p>Already a client? Register below and Jeremy will approve your account.</p>
+
+  <div class="note">
+    <strong>Existing clients only.</strong> This portal is for organisations that have already had an assessment carried out by Applegarth Health and Safety. New enquiries: <a href="https://applegarthhealthandsafety.co.uk/contact.html" style="color:#2e7d3a;">contact us here</a>.
+  </div>
+
+  <div class="error" id="err"></div>
+  <div class="success" id="success"></div>
+
+  <form id="form">
+    <div class="row">
+      <div>
+        <label for="name">Your name <span class="required">*</span></label>
+        <input type="text" id="name" placeholder="Jane Smith" required>
+      </div>
+      <div>
+        <label for="phone">Phone number</label>
+        <input type="tel" id="phone" placeholder="07900 000000">
+      </div>
+    </div>
+
+    <label for="email">Email address <span class="required">*</span></label>
+    <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
+
+    <label for="organisation">Organisation name <span class="required">*</span></label>
+    <input type="text" id="organisation" placeholder="St Peter's Church / Acme Ltd" required>
+
+    <label for="org_type">Organisation type <span class="required">*</span></label>
+    <select id="org_type" required>
+      <option value="">Select type…</option>
+      <option value="church">Church or place of worship</option>
+      <option value="charity">Charity or voluntary organisation</option>
+      <option value="business">Business</option>
+      <option value="care_home">Care home</option>
+      <option value="school">School or academy</option>
+      <option value="other">Other</option>
+    </select>
+
+    <label for="password">Choose a password <span class="required">*</span></label>
+    <input type="password" id="password" placeholder="At least 8 characters" required autocomplete="new-password">
+    <label for="password2">Confirm password <span class="required">*</span></label>
+    <input type="password" id="password2" placeholder="Repeat your password" required autocomplete="new-password">
+
+    <button class="btn" type="submit" id="btn">Request access</button>
+  </form>
+
+  <hr class="divider">
+  <div class="link-row">Already have an account? <a href="/login">Sign in</a></div>
+</div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  document.getElementById('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('btn');
+    const err = document.getElementById('err');
+    const success = document.getElementById('success');
+    err.style.display = 'none';
+    success.style.display = 'none';
+
+    const pw = document.getElementById('password').value;
+    const pw2 = document.getElementById('password2').value;
+    if (pw !== pw2) {
+      err.textContent = 'Passwords do not match.';
+      err.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('name').value,
+          email: document.getElementById('email').value,
+          phone: document.getElementById('phone').value,
+          organisation: document.getElementById('organisation').value,
+          org_type: document.getElementById('org_type').value,
+          password: pw,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById('form').style.display = 'none';
+        success.innerHTML = '<strong>Request submitted!</strong><br>Jeremy will review your registration and send you a confirmation email once your account is approved. This usually happens within one working day.';
+        success.style.display = 'block';
+      } else {
+        err.textContent = data.error || 'Registration failed';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Request access';
+      }
+    } catch (_) {
+      err.textContent = 'Connection error. Please try again.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Request access';
+    }
+  });
+</script>
+</body>
+</html>

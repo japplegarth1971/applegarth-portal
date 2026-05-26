@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Applegarth Portal</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a2e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AHS Portal">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f3; min-height: 100vh; }
+
+  .header { background: #1a2e1a; color: #fff; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .header-brand { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600; }
+  .header-brand span { color: #7ed48c; }
+  .admin-badge { background: rgba(126,212,140,0.25); color: #7ed48c; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px; }
+  .logout-btn { background: transparent; border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.8); padding: 5px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; }
+  .logout-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+  .nav-tabs { background: #fff; border-bottom: 1px solid #dce8dc; padding: 0 1.5rem; display: flex; gap: 4px; }
+  .nav-tab { padding: 12px 16px; font-size: 0.85rem; color: #5a7060; border-bottom: 2px solid transparent; cursor: pointer; }
+  .nav-tab.active { color: #1a2e1a; border-bottom-color: #2e7d3a; font-weight: 600; }
+  .nav-tab:hover { color: #1a2e1a; }
+  .badge-count { display: inline-block; background: #c0392b; color: #fff; border-radius: 10px; font-size: 0.68rem; font-weight: 700; padding: 1px 6px; margin-left: 5px; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+
+  /* Client cards grid */
+  .clients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+  .client-card { background: #fff; border: 1px solid #dce8dc; border-radius: 10px; padding: 16px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+  .client-card:hover { border-color: #2e7d3a; box-shadow: 0 2px 8px rgba(46,125,58,0.1); }
+  .client-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .client-name { font-size: 0.9rem; font-weight: 700; color: #1a2e1a; }
+  .client-type { font-size: 0.73rem; color: #5a7060; margin-top: 2px; }
+  .score-pill { font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+  .score-good { background: #e8f7ed; color: #1a5c2a; }
+  .score-warn { background: #fff3e0; color: #7a4000; }
+  .score-bad  { background: #fde8e8; color: #8b1a1a; }
+  .client-stats { display: flex; gap: 14px; font-size: 0.78rem; color: #5a7060; margin-bottom: 10px; }
+  .client-stats span { display: flex; align-items: center; gap: 4px; }
+  .client-meta { font-size: 0.75rem; color: #8aaa8a; }
+  .client-joined { font-size: 0.73rem; color: #8aaa8a; margin-top: 4px; }
+
+  /* Pending panel */
+  .pending-row { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f5f0; gap: 12px; }
+  .pending-row:last-child { border-bottom: none; }
+  .pending-info { flex: 1; }
+  .pending-name { font-size: 0.88rem; font-weight: 700; color: #1a2e1a; }
+  .pending-org { font-size: 0.8rem; color: #5a7060; }
+  .pending-meta { font-size: 0.73rem; color: #8aaa8a; margin-top: 2px; }
+  .btn-approve { background: #1a6e2e; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer; margin-right: 6px; }
+  .btn-approve:hover { background: #155724; }
+  .btn-reject { background: transparent; border: 1px solid #c0392b; color: #c0392b; padding: 6px 14px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; }
+  .btn-reject:hover { background: #fde8e8; }
+
+  /* Client detail panel */
+  .detail-back { display: flex; align-items: center; gap: 6px; color: #2e7d3a; font-size: 0.83rem; cursor: pointer; margin-bottom: 1rem; }
+  .detail-back:hover { text-decoration: underline; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 700px) { .detail-grid { grid-template-columns: 1fr; } }
+  .panel { background: #fff; border: 1px solid #dce8dc; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
+  .panel-head { padding: 12px 16px; border-bottom: 1px solid #dce8dc; display: flex; align-items: center; justify-content: space-between; }
+  .panel-head h2 { font-size: 0.88rem; font-weight: 700; color: #1a2e1a; }
+  .empty { padding: 1.5rem; text-align: center; color: #8aaa8a; font-size: 0.83rem; }
+  .assess-row { display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid #f0f5f0; gap: 10px; }
+  .assess-row:last-child { border-bottom: none; }
+  .assess-info { flex: 1; min-width: 0; }
+  .assess-name { font-size: 0.83rem; font-weight: 600; color: #1a2e1a; }
+  .assess-meta { font-size: 0.73rem; color: #5a7060; margin-top: 2px; }
+  .pill { font-size: 0.7rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+  .pill-current  { background: #e8f7ed; color: #1a5c2a; }
+  .pill-due_soon { background: #fff3e0; color: #7a4000; }
+  .pill-overdue  { background: #fde8e8; color: #8b1a1a; }
+  .doc-row { display: flex; align-items: center; padding: 9px 16px; border-bottom: 1px solid #f0f5f0; gap: 10px; }
+  .doc-row:last-child { border-bottom: none; }
+  .doc-name { font-size: 0.83rem; color: #1a2e1a; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc-date { font-size: 0.73rem; color: #8aaa8a; white-space: nowrap; }
+  .act-row { display: flex; align-items: flex-start; padding: 10px 16px; border-bottom: 1px solid #f0f5f0; gap: 10px; }
+  .act-row:last-child { border-bottom: none; }
+  .act-desc { font-size: 0.83rem; color: #1a2e1a; flex: 1; }
+  .act-assessment { font-size: 0.73rem; color: #5a7060; margin-top: 2px; }
+
+  /* Small buttons */
+  .btn-sm { font-size: 0.73rem; border: 1px solid #c5d6c5; padding: 4px 10px; border-radius: 5px; cursor: pointer; background: transparent; color: #5a7060; }
+  .btn-sm:hover { background: #f0f5f0; }
+  .btn-sm-red { border-color: #f5c0c0; color: #c0392b; }
+  .btn-sm-red:hover { background: #fde8e8; }
+  .btn-sm-green { border-color: #a3d9a3; color: #1a6e2e; font-weight: 700; }
+  .btn-sm-green:hover { background: #e8f7ed; }
+  .btn-add { background: #1a2e1a; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; }
+  .btn-add:hover { background: #2e7d3a; }
+
+  /* Forms */
+  .form-inline { padding: 14px 16px; background: #f8fbf8; border-top: 1px solid #dce8dc; }
+  .form-inline h3 { font-size: 0.83rem; font-weight: 700; color: #1a2e1a; margin-bottom: 10px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  label.f { display: block; font-size: 0.73rem; font-weight: 700; color: #2a3d2a; margin-bottom: 3px; }
+  input.f, select.f, textarea.f { width: 100%; padding: 7px 9px; border: 1px solid #c5d6c5; border-radius: 6px; font-size: 0.83rem; color: #1a2e1a; background: #fff; outline: none; }
+  input.f:focus, select.f:focus, textarea.f:focus { border-color: #2e7d3a; box-shadow: 0 0 0 2px rgba(46,125,58,0.1); }
+  textarea.f { resize: vertical; min-height: 60px; }
+  .form-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-primary { background: #1a2e1a; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+  .btn-primary:hover { background: #2e7d3a; }
+  .btn-cancel { background: transparent; border: 1px solid #c5d6c5; color: #5a7060; padding: 7px 14px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .btn-cancel:hover { background: #f0f5f0; }
+
+  /* Upload */
+  .upload-area { border: 2px dashed #c5d6c5; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; font-size: 0.83rem; color: #5a7060; transition: border-color 0.15s; }
+  .upload-area:hover, .upload-area.drag { border-color: #2e7d3a; color: #1a6e2e; }
+  #file-input { display: none; }
+  .upload-filename { font-size: 0.78rem; color: #1a6e2e; margin-top: 6px; }
+  .error-msg { background: #fde8e8; border: 1px solid #f5c0c0; color: #8b1a1a; border-radius: 6px; padding: 8px 12px; font-size: 0.78rem; margin-bottom: 8px; display: none; }
+  .success-msg { background: #e8f7ed; border: 1px solid #a3d9a3; color: #1a5c2a; border-radius: 6px; padding: 8px 12px; font-size: 0.78rem; margin-bottom: 8px; display: none; }
+
+  .overview-info { padding: 16px; border-bottom: 1px solid #dce8dc; display: flex; gap: 2rem; flex-wrap: wrap; }
+  .ov-stat { }
+  .ov-stat-val { font-size: 1.6rem; font-weight: 700; color: #1a2e1a; }
+  .ov-stat-lbl { font-size: 0.73rem; color: #5a7060; }
+</style>
+</head>
+<body>
+<header class="header">
+  <div style="display:flex; align-items:center; gap:10px;">
+    <div class="header-brand"><span>Applegarth</span> Health &amp; Safety</div>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <span style="font-size:0.8rem; color:rgba(255,255,255,0.6);" id="admin-name"></span>
+    <button class="logout-btn" id="logout-btn">Sign out</button>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <a class="nav-tab active" onclick="showView('overview', this)">Overview</a>
+  <a class="nav-tab" onclick="showView('clients', this)">Clients</a>
+  <a class="nav-tab" id="pending-tab" onclick="showView('pending', this)">Pending approvals</a>
+</nav>
+
+<!-- OVERVIEW VIEW -->
+<div id="view-overview" class="main">
+  <div class="panel" style="margin-bottom:1rem;">
+    <div class="overview-info">
+      <div class="ov-stat"><div class="ov-stat-val" id="ov-clients">—</div><div class="ov-stat-lbl">Active clients</div></div>
+      <div class="ov-stat"><div class="ov-stat-val" id="ov-pending" style="color:#c0392b;">—</div><div class="ov-stat-lbl">Pending approvals</div></div>
+      <div class="ov-stat"><div class="ov-stat-val" id="ov-due" style="color:#e09000;">—</div><div class="ov-stat-lbl">Assessments due</div></div>
+      <div class="ov-stat"><div class="ov-stat-val" id="ov-overdue" style="color:#c0392b;">—</div><div class="ov-stat-lbl">Overdue</div></div>
+    </div>
+  </div>
+  <div class="clients-grid" id="overview-cards"></div>
+</div>
+
+<!-- CLIENTS VIEW -->
+<div id="view-clients" class="main" style="display:none;">
+  <div class="clients-grid" id="clients-cards"></div>
+</div>
+
+<!-- CLIENT DETAIL VIEW -->
+<div id="view-detail" class="main" style="display:none;">
+  <div class="detail-back" onclick="showClients()">← Back to clients</div>
+  <div id="detail-header" style="margin-bottom:1rem;">
+    <h1 style="font-size:1.2rem;color:#1a2e1a;" id="detail-title"></h1>
+    <p style="font-size:0.83rem;color:#5a7060;margin-top:3px;" id="detail-sub"></p>
+  </div>
+  <div class="detail-grid">
+    <div>
+      <!-- Assessments panel -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Assessments</h2>
+          <button class="btn-add" onclick="toggleAddAssessment()">+ Add</button>
+        </div>
+        <div id="add-assessment-form" style="display:none;" class="form-inline">
+          <h3>Add assessment</h3>
+          <div id="add-assess-err" class="error-msg"></div>
+          <div class="form-row single">
+            <div><label class="f">Title</label>
+            <input class="f" id="a-title" placeholder="e.g. Fire Risk Assessment — Main Building"></div>
+          </div>
+          <div class="form-row">
+            <div><label class="f">Type</label>
+            <select class="f" id="a-type">
+              <option value="fire">Fire Risk Assessment</option>
+              <option value="risk">General Risk Assessment</option>
+              <option value="safety">Safety Issue Review</option>
+              <option value="other">Other</option>
+            </select></div>
+            <div><label class="f">Completed date</label>
+            <input class="f" type="date" id="a-completed"></div>
+          </div>
+          <div class="form-row">
+            <div><label class="f">Review date</label>
+            <input class="f" type="date" id="a-review"></div>
+            <div><label class="f">Notes</label>
+            <input class="f" id="a-notes" placeholder="Optional notes"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary" onclick="submitAssessment()">Save assessment</button>
+            <button class="btn-cancel" onclick="toggleAddAssessment()">Cancel</button>
+          </div>
+        </div>
+        <div id="assessments-detail"></div>
+      </div>
+
+      <!-- Action items panel -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Action items</h2>
+          <button class="btn-add" onclick="toggleAddAction()">+ Add</button>
+        </div>
+        <div id="add-action-form" style="display:none;" class="form-inline">
+          <h3>Add action item</h3>
+          <div class="form-row single">
+            <div><label class="f">Assessment</label>
+            <select class="f" id="action-assessment-select"></select></div>
+          </div>
+          <div class="form-row single">
+            <div><label class="f">Description</label>
+            <textarea class="f" id="action-desc" placeholder="Describe the required action…"></textarea></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary" onclick="submitAction()">Add action item</button>
+            <button class="btn-cancel" onclick="toggleAddAction()">Cancel</button>
+          </div>
+        </div>
+        <div id="actions-detail"></div>
+      </div>
+    </div>
+
+    <div>
+      <!-- Documents panel -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Documents</h2>
+        </div>
+        <div class="form-inline">
+          <h3>Upload document</h3>
+          <div id="upload-err" class="error-msg"></div>
+          <div id="upload-ok" class="success-msg"></div>
+          <div class="form-row single" style="margin-bottom:8px;">
+            <div><label class="f">Link to assessment (optional)</label>
+            <select class="f" id="upload-assessment-select"><option value="">Not linked</option></select></div>
+          </div>
+          <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+            📎 Click to choose a PDF or document
+            <div class="upload-filename" id="upload-filename"></div>
+          </div>
+          <input type="file" id="file-input" accept=".pdf,.doc,.docx,.xlsx,.png,.jpg" onchange="fileSelected(this)">
+          <div class="form-actions" style="margin-top:10px;">
+            <button class="btn-primary" onclick="uploadFile()">Upload</button>
+          </div>
+        </div>
+        <div id="documents-detail"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PENDING VIEW -->
+<div id="view-pending" class="main" style="display:none;">
+  <div class="panel">
+    <div class="panel-head"><h2>Pending registrations</h2></div>
+    <div style="padding: 0 16px;" id="pending-list"></div>
+  </div>
+</div>
+
+<script>
+  let currentClientId = null;
+  let clientDetail = null;
+  let allClients = [];
+  let pendingClients = [];
+
+  async function init() {
+    const me = await fetch('/api/auth/me');
+    if (!me.ok) { window.location.href = '/login'; return; }
+    const user = await me.json();
+    if (!user.is_admin) { window.location.href = '/dashboard'; return; }
+    document.getElementById('admin-name').textContent = user.name;
+    document.getElementById('logout-btn').onclick = async () => {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    };
+    await loadAll();
+  }
+
+  async function loadAll() {
+    const [clients, pending] = await Promise.all([
+      fetch('/api/admin/clients').then(r => r.json()),
+      fetch('/api/admin/pending').then(r => r.json()),
+    ]);
+    allClients = clients;
+    pendingClients = pending;
+
+    // Overview stats
+    const dueCount = clients.reduce((n, c) => n + c.due_count, 0);
+    const overdueCount = clients.reduce((n, c) => {
+      const detail = c; return n;
+    }, 0);
+    document.getElementById('ov-clients').textContent = clients.length;
+    document.getElementById('ov-pending').textContent = pending.length;
+    document.getElementById('ov-due').textContent = dueCount;
+    document.getElementById('ov-overdue').textContent = 0;
+
+    // Pending badge
+    const tab = document.getElementById('pending-tab');
+    if (pending.length > 0) {
+      tab.innerHTML = `Pending approvals <span class="badge-count">${pending.length}</span>`;
+    }
+
+    renderClientCards(clients, 'overview-cards');
+    renderClientCards(clients, 'clients-cards');
+    renderPending(pending);
+  }
+
+  function renderClientCards(clients, containerId) {
+    const el = document.getElementById(containerId);
+    if (clients.length === 0) {
+      el.innerHTML = '<p style="color:#8aaa8a;font-size:0.85rem;">No clients yet.</p>';
+      return;
+    }
+    el.innerHTML = clients.map(c => {
+      const sc = c.score;
+      const scoreCls = sc >= 70 ? 'score-good' : sc >= 40 ? 'score-warn' : 'score-bad';
+      const typeLabel = { church:'Church', charity:'Charity', business:'Business', care_home:'Care home', school:'School', other:'Other' }[c.org_type] || c.org_type;
+      return `<div class="client-card" onclick="openClient(${c.id})">
+        <div class="client-card-top">
+          <div>
+            <div class="client-name">${esc(c.organisation)}</div>
+            <div class="client-type">${typeLabel} · ${esc(c.name)}</div>
+          </div>
+          <span class="score-pill ${scoreCls}">${sc}%</span>
+        </div>
+        <div class="client-stats">
+          <span>📋 ${c.assessment_count} assessment${c.assessment_count !== 1 ? 's' : ''}</span>
+          ${c.due_count > 0 ? `<span style="color:#a05e00;">⚠️ ${c.due_count} due</span>` : '<span style="color:#1a7a2e;">✓ All current</span>'}
+        </div>
+        <div class="client-meta">${esc(c.email)}</div>
+        <div class="client-joined">Client since ${fmtDate(c.created_at)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderPending(pending) {
+    const el = document.getElementById('pending-list');
+    if (pending.length === 0) {
+      el.innerHTML = '<div class="empty">No pending registrations.</div>';
+      return;
+    }
+    el.innerHTML = pending.map(p => {
+      const typeLabel = { church:'Church', charity:'Charity', business:'Business', care_home:'Care home', school:'School', other:'Other' }[p.org_type] || p.org_type;
+      return `<div class="pending-row">
+        <div class="pending-info">
+          <div class="pending-name">${esc(p.name)}</div>
+          <div class="pending-org">${esc(p.organisation)} — ${typeLabel}</div>
+          <div class="pending-meta">${esc(p.email)}${p.phone ? ' · ' + esc(p.phone) : ''} · Registered ${fmtDate(p.created_at)}</div>
+        </div>
+        <button class="btn-approve" onclick="approveClient(${p.id}, 'approve', event)">Approve</button>
+        <button class="btn-reject" onclick="approveClient(${p.id}, 'reject', event)">Reject</button>
+      </div>`;
+    }).join('');
+  }
+
+  async function approveClient(id, action, event) {
+    event.stopPropagation();
+    const btn = event.target;
+    btn.disabled = true;
+    await fetch(`/api/admin/clients/${id}/approve?action=${action}`, { method: 'POST' });
+    await loadAll();
+  }
+
+  async function openClient(id) {
+    currentClientId = id;
+    const res = await fetch(`/api/admin/clients/${id}`);
+    if (!res.ok) return;
+    clientDetail = await res.json();
+
+    document.getElementById('detail-title').textContent = clientDetail.client.organisation;
+    const sub = [
+      { church:'Church', charity:'Charity', business:'Business', care_home:'Care home', school:'School', other:'Other' }[clientDetail.client.org_type] || clientDetail.client.org_type,
+      clientDetail.client.email,
+      clientDetail.client.phone,
+    ].filter(Boolean).join(' · ');
+    document.getElementById('detail-sub').textContent = sub;
+
+    renderDetailAssessments();
+    renderDetailDocs();
+    renderDetailActions();
+    populateAssessmentSelects();
+
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    Object.keys({ overview:1, clients:1, pending:1, detail:1 }).forEach(v => {
+      const el = document.getElementById('view-' + v);
+      if (el) el.style.display = 'none';
+    });
+    document.getElementById('view-detail').style.display = '';
+  }
+
+  function renderDetailAssessments() {
+    const el = document.getElementById('assessments-detail');
+    const items = clientDetail.assessments;
+    if (items.length === 0) {
+      el.innerHTML = '<div class="empty">No assessments yet. Add one above.</div>';
+      return;
+    }
+    const icons = { fire:'🔥', risk:'📋', safety:'🛡️', other:'📄' };
+    el.innerHTML = items.map(a => {
+      let meta = [];
+      if (a.completed_date) meta.push('Completed: ' + fmtDate(a.completed_date));
+      if (a.review_date) meta.push('Review: ' + fmtDate(a.review_date));
+      return `<div class="assess-row">
+        <span style="font-size:1.1rem;">${icons[a.type] || '📄'}</span>
+        <div class="assess-info">
+          <div class="assess-name">${esc(a.title)}</div>
+          <div class="assess-meta">${meta.join(' · ') || 'No dates set'}</div>
+        </div>
+        <span class="pill pill-${a.status}">${statusLabel(a.status)}</span>
+        <button class="btn-sm btn-sm-red" onclick="deleteAssessment(${a.id})">Delete</button>
+      </div>`;
+    }).join('');
+  }
+
+  function renderDetailDocs() {
+    const el = document.getElementById('documents-detail');
+    const docs = clientDetail.documents;
+    if (docs.length === 0) {
+      el.innerHTML = '<div class="empty">No documents uploaded yet.</div>';
+      return;
+    }
+    el.innerHTML = docs.map(d => {
+      const size = d.file_size ? ' · ' + formatBytes(d.file_size) : '';
+      return `<div class="doc-row">
+        <span>📄</span>
+        <span class="doc-name">${esc(d.original_name)}</span>
+        <span class="doc-date">${fmtDate(d.uploaded_at)}${size}</span>
+        <button class="btn-sm" onclick="downloadDoc(${d.id})">Download</button>
+        <button class="btn-sm btn-sm-red" onclick="deleteDoc(${d.id})">Delete</button>
+      </div>`;
+    }).join('');
+  }
+
+  function renderDetailActions() {
+    const el = document.getElementById('actions-detail');
+    const items = clientDetail.action_items;
+    if (items.length === 0) {
+      el.innerHTML = '<div class="empty">No action items.</div>';
+      return;
+    }
+    el.innerHTML = items.map(a => `<div class="act-row">
+      <div style="flex:1;">
+        <div class="act-desc">${esc(a.description)}</div>
+        <div class="act-assessment">${esc(a.assessment_title)}</div>
+      </div>
+      <span class="pill ${a.status === 'open' ? 'pill-overdue' : 'pill-current'}">${a.status === 'open' ? 'Open' : 'Resolved'}</span>
+      ${a.status === 'open'
+        ? `<button class="btn-sm btn-sm-green" onclick="resolveAction(${a.id})">Resolve</button>`
+        : ''}
+    </div>`).join('');
+  }
+
+  function populateAssessmentSelects() {
+    const options = clientDetail.assessments.map(a =>
+      `<option value="${a.id}">${esc(a.title)}</option>`
+    ).join('');
+    document.getElementById('action-assessment-select').innerHTML = options || '<option value="">No assessments</option>';
+    document.getElementById('upload-assessment-select').innerHTML =
+      '<option value="">Not linked</option>' + options;
+  }
+
+  function showView(name, el) {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    ['overview', 'clients', 'pending', 'detail'].forEach(v => {
+      const el2 = document.getElementById('view-' + v);
+      if (el2) el2.style.display = 'none';
+    });
+    document.getElementById('view-' + name).style.display = '';
+  }
+
+  function showClients() {
+    showView('clients', document.querySelector('.nav-tab:nth-child(2)'));
+  }
+
+  // Assessment form
+  function toggleAddAssessment() {
+    const f = document.getElementById('add-assessment-form');
+    f.style.display = f.style.display === 'none' ? '' : 'none';
+  }
+
+  async function submitAssessment() {
+    const errEl = document.getElementById('add-assess-err');
+    errEl.style.display = 'none';
+    const body = {
+      client_id: currentClientId,
+      title: document.getElementById('a-title').value,
+      type: document.getElementById('a-type').value,
+      completed_date: document.getElementById('a-completed').value || null,
+      review_date: document.getElementById('a-review').value || null,
+      notes: document.getElementById('a-notes').value,
+    };
+    if (!body.title) { errEl.textContent = 'Title is required'; errEl.style.display = 'block'; return; }
+    const res = await fetch('/api/admin/assessments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      const updated = await fetch(`/api/admin/clients/${currentClientId}`).then(r => r.json());
+      clientDetail = updated;
+      renderDetailAssessments();
+      populateAssessmentSelects();
+      toggleAddAssessment();
+      document.getElementById('a-title').value = '';
+      document.getElementById('a-review').value = '';
+      document.getElementById('a-completed').value = '';
+    } else {
+      const d = await res.json();
+      errEl.textContent = d.error || 'Failed to save';
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function deleteAssessment(id) {
+    if (!confirm('Delete this assessment and its action items?')) return;
+    await fetch('/api/admin/assessments/' + id, { method: 'DELETE' });
+    const updated = await fetch(`/api/admin/clients/${currentClientId}`).then(r => r.json());
+    clientDetail = updated;
+    renderDetailAssessments();
+    populateAssessmentSelects();
+  }
+
+  // Action items
+  function toggleAddAction() {
+    const f = document.getElementById('add-action-form');
+    f.style.display = f.style.display === 'none' ? '' : 'none';
+  }
+
+  async function submitAction() {
+    const assessId = document.getElementById('action-assessment-select').value;
+    const desc = document.getElementById('action-desc').value;
+    if (!assessId || !desc) return;
+    await fetch('/api/admin/actions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assessment_id: parseInt(assessId), client_id: currentClientId, description: desc }),
+    });
+    const updated = await fetch(`/api/admin/clients/${currentClientId}`).then(r => r.json());
+    clientDetail = updated;
+    renderDetailActions();
+    toggleAddAction();
+    document.getElementById('action-desc').value = '';
+  }
+
+  async function resolveAction(id) {
+    await fetch('/api/admin/actions/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'resolved' }),
+    });
+    const updated = await fetch(`/api/admin/clients/${currentClientId}`).then(r => r.json());
+    clientDetail = updated;
+    renderDetailActions();
+  }
+
+  // File upload
+  let selectedFile = null;
+  function fileSelected(input) {
+    selectedFile = input.files[0];
+    document.getElementById('upload-filename').textContent = selectedFile ? selectedFile.name : '';
+  }
+
+  async function uploadFile() {
+    const errEl = document.getElementById('upload-err');
+    const okEl = document.getElementById('upload-ok');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+    if (!selectedFile) { errEl.textContent = 'Please choose a file first'; errEl.style.display = 'block'; return; }
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    fd.append('client_id', currentClientId);
+    const assessId = document.getElementById('upload-assessment-select').value;
+    if (assessId) fd.append('assessment_id', assessId);
+    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+    if (res.ok) {
+      okEl.textContent = `"${selectedFile.name}" uploaded successfully.`;
+      okEl.style.display = 'block';
+      selectedFile = null;
+      document.getElementById('file-input').value = '';
+      document.getElementById('upload-filename').textContent = '';
+      const updated = await fetch(`/api/admin/clients/${currentClientId}`).then(r => r.json());
+      clientDetail = updated;
+      renderDetailDocs();
+    } else {
+      const d = await res.json();
+      errEl.textContent = d.error || 'Upload failed';
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function deleteDoc(id) {
+    if (!confirm('Delete this document?')) return;
+    await fetch('/api/admin/documents/' + id, { method: 'DELETE' });
+    const updated = await fetch(`/api/admin/clients/${currentClientId}`).then(r => r.json());
+    clientDetail = updated;
+    renderDetailDocs();
+  }
+
+  function downloadDoc(id) {
+    window.location.href = `/api/client/documents/${id}/download`;
+  }
+
+  // Utils
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtDate(s) {
+    if (!s) return '—';
+    try { return new Date(s).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }); }
+    catch (_) { return s; }
+  }
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b/1024).toFixed(0) + ' KB';
+    return (b/1048576).toFixed(1) + ' MB';
+  }
+  function statusLabel(s) { return { current:'Current', due_soon:'Due soon', overdue:'Overdue' }[s] || s; }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Applegarth Health and Safety Portal</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a2e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AHS Portal">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f3; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .brand { text-align: center; margin-bottom: 2rem; }
+  .brand-logo { display: inline-flex; align-items: center; gap: 10px; color: #1a2e1a; font-size: 1.25rem; font-weight: 600; text-decoration: none; }
+  .brand-dot { width: 10px; height: 10px; background: #2e7d3a; border-radius: 50%; }
+  .brand-sub { font-size: 0.8rem; color: #5a7060; margin-top: 4px; letter-spacing: 0.5px; }
+  .card { background: #fff; border: 1px solid #d8e4d8; border-radius: 12px; padding: 2rem; width: 100%; max-width: 380px; }
+  .card h1 { font-size: 1.2rem; color: #1a2e1a; margin-bottom: 0.25rem; }
+  .card p { font-size: 0.85rem; color: #5a7060; margin-bottom: 1.5rem; }
+  label { display: block; font-size: 0.8rem; font-weight: 600; color: #2a3d2a; margin-bottom: 5px; }
+  input { width: 100%; padding: 10px 12px; border: 1px solid #c5d6c5; border-radius: 7px; font-size: 0.9rem; color: #1a2e1a; background: #fff; margin-bottom: 1rem; outline: none; transition: border-color 0.15s; }
+  input:focus { border-color: #2e7d3a; box-shadow: 0 0 0 3px rgba(46,125,58,0.1); }
+  .btn { width: 100%; padding: 11px; background: #1a2e1a; color: #fff; border: none; border-radius: 7px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .btn:hover { background: #2e7d3a; }
+  .btn:disabled { background: #8aaa8a; cursor: not-allowed; }
+  .error { background: #fdf0f0; border: 1px solid #f5c0c0; color: #9b2c2c; border-radius: 7px; padding: 10px 12px; font-size: 0.83rem; margin-bottom: 1rem; display: none; }
+  .link-row { text-align: center; margin-top: 1.25rem; font-size: 0.83rem; color: #5a7060; }
+  .link-row a { color: #2e7d3a; text-decoration: none; font-weight: 600; }
+  .link-row a:hover { text-decoration: underline; }
+  .divider { border: none; border-top: 1px solid #e4ede4; margin: 1.25rem 0; }
+</style>
+</head>
+<body>
+<div class="brand">
+  <div class="brand-logo"><span class="brand-dot"></span>Applegarth Health &amp; Safety</div>
+  <div class="brand-sub">CLIENT PORTAL</div>
+</div>
+
+<div class="card">
+  <h1>Sign in to your portal</h1>
+  <p>View your reports, compliance status, and review dates.</p>
+  <div class="error" id="err"></div>
+  <form id="form">
+    <label for="email">Email address</label>
+    <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Your password" required autocomplete="current-password">
+    <button class="btn" type="submit" id="btn">Sign in</button>
+  </form>
+  <hr class="divider">
+  <div class="link-row">Don't have an account? <a href="/register">Request access</a></div>
+</div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  (async () => {
+    try {
+      const r = await fetch('/api/auth/me');
+      if (r.ok) {
+        const u = await r.json();
+        window.location.href = u.is_admin ? '/admin' : '/dashboard';
+      }
+    } catch (_) {}
+  })();
+
+  document.getElementById('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('btn');
+    const err = document.getElementById('err');
+    err.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        window.location.href = data.is_admin ? '/admin' : '/dashboard';
+      } else {
+        err.textContent = data.error || 'Login failed';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+      }
+    } catch (_) {
+      err.textContent = 'Connection error. Please try again.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    }
+  });
+</script>
+</body>
+</html>

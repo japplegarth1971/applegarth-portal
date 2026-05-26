@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Portal — Applegarth Health and Safety</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a2e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AHS Portal">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f3; min-height: 100vh; }
+
+  /* Header */
+  .header { background: #1a2e1a; color: #fff; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .header-brand { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600; }
+  .header-brand span { color: #7ed48c; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .org-chip { background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; color: rgba(255,255,255,0.9); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .logout-btn { background: transparent; border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.8); padding: 5px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
+  .logout-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+  /* Nav tabs */
+  .nav-tabs { background: #fff; border-bottom: 1px solid #dce8dc; padding: 0 1.5rem; display: flex; gap: 4px; }
+  .nav-tab { padding: 12px 16px; font-size: 0.85rem; color: #5a7060; border-bottom: 2px solid transparent; cursor: pointer; transition: color 0.15s; text-decoration: none; }
+  .nav-tab.active { color: #1a2e1a; border-bottom-color: #2e7d3a; font-weight: 600; }
+  .nav-tab:hover { color: #1a2e1a; }
+
+  /* Main layout */
+  .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; display: grid; grid-template-columns: 1fr 280px; gap: 1.25rem; }
+  @media (max-width: 768px) { .main { grid-template-columns: 1fr; } }
+
+  /* Welcome */
+  .welcome { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+  .welcome h1 { font-size: 1.25rem; color: #1a2e1a; }
+  .welcome p { font-size: 0.83rem; color: #5a7060; margin-top: 2px; }
+  .request-btn { background: #1a6e2e; color: #fff; border: none; padding: 8px 16px; border-radius: 7px; font-size: 0.83rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+  .request-btn:hover { background: #155724; }
+
+  /* Metric cards */
+  .metrics { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 600px) { .metrics { grid-template-columns: 1fr 1fr; } }
+  .metric { background: #fff; border: 1px solid #dce8dc; border-radius: 9px; padding: 14px; }
+  .metric-label { font-size: 0.75rem; color: #5a7060; margin-bottom: 4px; }
+  .metric-value { font-size: 1.6rem; font-weight: 700; color: #1a2e1a; }
+  .metric-sub { font-size: 0.73rem; margin-top: 3px; }
+  .good { color: #1a7a2e; } .warn { color: #a05e00; } .bad { color: #c0392b; }
+
+  /* Panel */
+  .panel { background: #fff; border: 1px solid #dce8dc; border-radius: 10px; overflow: hidden; }
+  .panel-head { padding: 12px 16px; border-bottom: 1px solid #dce8dc; display: flex; align-items: center; justify-content: space-between; }
+  .panel-head h2 { font-size: 0.9rem; font-weight: 600; color: #1a2e1a; }
+  .panel-head a { font-size: 0.78rem; color: #2e7d3a; text-decoration: none; cursor: pointer; }
+  .panel-head a:hover { text-decoration: underline; }
+  .empty { padding: 2rem; text-align: center; color: #8aaa8a; font-size: 0.85rem; }
+
+  /* Assessment rows */
+  .assess-row { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid #f0f5f0; gap: 12px; }
+  .assess-row:last-child { border-bottom: none; }
+  .assess-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+  .icon-fire { background: #fde8e8; }
+  .icon-risk { background: #e8f0fd; }
+  .icon-safety { background: #e8f7ed; }
+  .icon-other { background: #f5f5e8; }
+  .assess-info { flex: 1; min-width: 0; }
+  .assess-name { font-size: 0.85rem; font-weight: 600; color: #1a2e1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .assess-date { font-size: 0.75rem; color: #5a7060; margin-top: 2px; }
+
+  /* Status pills */
+  .pill { font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+  .pill-current  { background: #e8f7ed; color: #1a5c2a; }
+  .pill-due_soon { background: #fff3e0; color: #7a4000; }
+  .pill-overdue  { background: #fde8e8; color: #8b1a1a; }
+  .pill-none     { background: #f0f0f0; color: #666; }
+
+  /* Action button */
+  .act-btn { font-size: 0.75rem; border: 1px solid; padding: 4px 11px; border-radius: 6px; cursor: pointer; white-space: nowrap; transition: all 0.15s; background: transparent; }
+  .act-btn-green { border-color: #1a6e2e; color: #1a6e2e; }
+  .act-btn-green:hover { background: #1a6e2e; color: #fff; }
+  .act-btn-neutral { border-color: #c5d6c5; color: #5a7060; }
+  .act-btn-neutral:hover { background: #f0f5f0; }
+  .act-btn-red { border-color: #c0392b; color: #c0392b; }
+  .act-btn-red:hover { background: #fde8e8; }
+
+  /* Document rows */
+  .doc-row { display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid #f0f5f0; gap: 10px; }
+  .doc-row:last-child { border-bottom: none; }
+  .doc-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .doc-name { font-size: 0.83rem; color: #1a2e1a; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc-date { font-size: 0.73rem; color: #8aaa8a; white-space: nowrap; }
+
+  /* Sidebar */
+  .sidebar { display: flex; flex-direction: column; gap: 1rem; }
+  .alert-box { background: #fff8e6; border: 1px solid #f0d060; border-radius: 10px; padding: 14px; }
+  .alert-box h3 { font-size: 0.85rem; font-weight: 700; color: #7a5000; margin-bottom: 6px; }
+  .alert-box p { font-size: 0.8rem; color: #7a5000; margin-bottom: 10px; line-height: 1.5; }
+  .alert-btn { width: 100%; background: #7a5000; color: #fff; border: none; padding: 8px; border-radius: 7px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+  .alert-btn:hover { background: #5a3800; }
+  .score-card { background: #fff; border: 1px solid #dce8dc; border-radius: 10px; padding: 14px; text-align: center; }
+  .score-card h3 { font-size: 0.85rem; font-weight: 600; color: #1a2e1a; margin-bottom: 12px; }
+  .score-ring { width: 72px; height: 72px; border-radius: 50%; background: #e8f7ed; border: 3px solid #2e7d3a; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; }
+  .score-ring.warn { background: #fff3e0; border-color: #e09000; }
+  .score-ring.bad  { background: #fde8e8; border-color: #c0392b; }
+  .score-num { font-size: 1.4rem; font-weight: 700; color: #1a5c2a; }
+  .score-num.warn { color: #7a4000; }
+  .score-num.bad  { color: #8b1a1a; }
+  .score-label { font-size: 0.75rem; color: #5a7060; }
+  .contact-card { background: #fff; border: 1px solid #dce8dc; border-radius: 10px; padding: 14px; }
+  .contact-card h3 { font-size: 0.85rem; font-weight: 600; color: #1a2e1a; margin-bottom: 10px; }
+  .consultant-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .consultant-avatar { width: 36px; height: 36px; border-radius: 50%; background: #1a2e1a; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: #7ed48c; flex-shrink: 0; }
+  .consultant-name { font-size: 0.85rem; font-weight: 600; color: #1a2e1a; }
+  .consultant-role { font-size: 0.72rem; color: #5a7060; }
+  .contact-row { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; color: #5a7060; margin-bottom: 6px; }
+  .contact-row a { color: #2e7d3a; text-decoration: none; }
+  .contact-row a:hover { text-decoration: underline; }
+
+  /* Tab panels */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: contents; }
+  .docs-panel { display: none; }
+  .docs-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand"><span>Applegarth</span> Health &amp; Safety</div>
+  <div class="header-right">
+    <span class="org-chip" id="org-name">Loading…</span>
+    <button class="logout-btn" id="logout-btn">Sign out</button>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <a class="nav-tab active" data-tab="dashboard" onclick="switchTab('dashboard',this)">Dashboard</a>
+  <a class="nav-tab" data-tab="documents" onclick="switchTab('documents',this)">All documents</a>
+</nav>
+
+<!-- DASHBOARD TAB -->
+<div id="tab-dashboard">
+  <div class="main">
+    <div class="welcome">
+      <div>
+        <h1 id="welcome-title">Welcome back</h1>
+        <p id="welcome-sub"></p>
+      </div>
+      <button class="request-btn" onclick="requestAssessment()">+ Request assessment</button>
+    </div>
+
+    <div class="metrics" id="metrics">
+      <div class="metric"><div class="metric-label">Compliance score</div><div class="metric-value good" id="m-score">—</div><div class="metric-sub" id="m-score-sub"></div></div>
+      <div class="metric"><div class="metric-label">Assessments</div><div class="metric-value" id="m-total">—</div><div class="metric-sub" style="color:#5a7060">Total held</div></div>
+      <div class="metric"><div class="metric-label">Due for review</div><div class="metric-value" id="m-due">—</div><div class="metric-sub" id="m-due-sub"></div></div>
+      <div class="metric"><div class="metric-label">Open actions</div><div class="metric-value" id="m-actions">—</div><div class="metric-sub" id="m-actions-sub"></div></div>
+    </div>
+
+    <div>
+      <div class="panel" style="margin-bottom:1rem;">
+        <div class="panel-head">
+          <h2>Assessments &amp; compliance status</h2>
+        </div>
+        <div id="assessments-list"><div class="empty">Loading…</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Recent documents</h2>
+          <a onclick="switchTab('documents', document.querySelector('[data-tab=documents]'))">View all</a>
+        </div>
+        <div id="recent-docs"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+      <div id="alert-area"></div>
+
+      <div class="score-card">
+        <h3>Compliance score</h3>
+        <div class="score-ring" id="score-ring">
+          <span class="score-num" id="score-ring-num">—</span>
+        </div>
+        <div class="score-label" id="score-ring-label">Calculating…</div>
+      </div>
+
+      <div class="contact-card">
+        <h3>Your consultant</h3>
+        <div class="consultant-row">
+          <div class="consultant-avatar">JA</div>
+          <div><div class="consultant-name">Jeremy Applegarth</div><div class="consultant-role">NEBOSH Diploma · IOSH Member</div></div>
+        </div>
+        <div class="contact-row">📞 <a href="tel:+447900914719">07900 914719</a></div>
+        <div class="contact-row">✉️ <a href="mailto:info@applegarthhealthandsafety.co.uk">info@applegarthhealthandsafety.co.uk</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DOCUMENTS TAB -->
+<div id="tab-documents" style="display:none; max-width:1100px; margin:0 auto; padding:1.5rem;">
+  <div class="panel">
+    <div class="panel-head"><h2>All documents</h2></div>
+    <div id="all-docs"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<script>
+  let dashData = null;
+
+  async function init() {
+    const me = await fetch('/api/auth/me');
+    if (!me.ok) { window.location.href = '/login'; return; }
+    const user = await me.json();
+    if (user.is_admin) { window.location.href = '/admin'; return; }
+
+    document.getElementById('org-name').textContent = user.organisation;
+    document.getElementById('welcome-title').textContent = user.organisation;
+    document.getElementById('welcome-sub').textContent =
+      user.org_type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+    document.getElementById('logout-btn').onclick = async () => {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    };
+
+    loadDashboard();
+  }
+
+  async function loadDashboard() {
+    const res = await fetch('/api/client/dashboard');
+    if (!res.ok) return;
+    dashData = await res.json();
+    renderDashboard(dashData);
+  }
+
+  function renderDashboard(d) {
+    // Metrics
+    const scoreEl = document.getElementById('m-score');
+    scoreEl.textContent = d.score + '%';
+    scoreEl.className = 'metric-value ' + scoreClass(d.score);
+    document.getElementById('m-score-sub').innerHTML =
+      '<span class="' + scoreClass(d.score) + '">' + scoreLabel(d.score) + '</span>';
+    document.getElementById('m-total').textContent = d.assessments.length;
+    const dueEl = document.getElementById('m-due');
+    dueEl.textContent = d.due_count;
+    dueEl.className = 'metric-value ' + (d.due_count > 0 ? 'warn' : 'good');
+    document.getElementById('m-due-sub').innerHTML =
+      '<span class="' + (d.due_count > 0 ? 'warn' : 'good') + '">' +
+      (d.due_count > 0 ? 'Needs attention' : 'All current') + '</span>';
+    const actEl = document.getElementById('m-actions');
+    actEl.textContent = d.open_actions;
+    actEl.className = 'metric-value ' + (d.open_actions > 0 ? 'bad' : 'good');
+    document.getElementById('m-actions-sub').innerHTML =
+      '<span class="' + (d.open_actions > 0 ? 'bad' : 'good') + '">' +
+      (d.open_actions > 0 ? 'Open items' : 'All resolved') + '</span>';
+
+    // Score ring
+    const ringEl = document.getElementById('score-ring');
+    const numEl = document.getElementById('score-ring-num');
+    const lblEl = document.getElementById('score-ring-label');
+    numEl.textContent = d.score + '%';
+    if (d.score >= 70) {
+      ringEl.className = 'score-ring'; numEl.className = 'score-num'; lblEl.textContent = 'Good standing';
+    } else if (d.score >= 40) {
+      ringEl.className = 'score-ring warn'; numEl.className = 'score-num warn'; lblEl.textContent = 'Needs attention';
+    } else {
+      ringEl.className = 'score-ring bad'; numEl.className = 'score-num bad'; lblEl.textContent = 'Action required';
+    }
+
+    // Alert area
+    const urgentItems = d.assessments.filter(a => a.status === 'overdue');
+    const dueSoon = d.assessments.filter(a => a.status === 'due_soon');
+    let alertHtml = '';
+    if (urgentItems.length > 0) {
+      alertHtml = `<div class="alert-box">
+        <h3>⚠️ Overdue assessment${urgentItems.length > 1 ? 's' : ''}</h3>
+        <p>${urgentItems.map(a => a.title).join(', ')} — review overdue. Book now to stay compliant.</p>
+        <button class="alert-btn" onclick="requestAssessment()">Book a review now</button>
+      </div>`;
+    } else if (dueSoon.length > 0) {
+      alertHtml = `<div class="alert-box" style="background:#f0f7f0;border-color:#a3c9a3;">
+        <h3 style="color:#1a5c2a;">📋 Review due soon</h3>
+        <p style="color:#1a5c2a;">${dueSoon.map(a => a.title).join(', ')} — due within 90 days.</p>
+        <button class="alert-btn" style="background:#1a5c2a;" onclick="requestAssessment()">Book renewal</button>
+      </div>`;
+    }
+    document.getElementById('alert-area').innerHTML = alertHtml;
+
+    // Assessments
+    const aList = document.getElementById('assessments-list');
+    if (d.assessments.length === 0) {
+      aList.innerHTML = '<div class="empty">No assessments on record yet. Contact Jeremy to get started.</div>';
+    } else {
+      aList.innerHTML = d.assessments.map(a => assessmentRow(a)).join('');
+    }
+
+    // Recent docs
+    const dList = document.getElementById('recent-docs');
+    if (d.recent_documents.length === 0) {
+      dList.innerHTML = '<div class="empty">No documents uploaded yet.</div>';
+    } else {
+      dList.innerHTML = d.recent_documents.map(doc => docRow(doc)).join('');
+    }
+  }
+
+  function assessmentRow(a) {
+    const icons = { fire: '🔥', risk: '📋', safety: '🛡️', other: '📄' };
+    const iconClass = { fire: 'icon-fire', risk: 'icon-risk', safety: 'icon-safety', other: 'icon-other' };
+    const statusLabel = { current: 'Current', due_soon: 'Due soon', overdue: 'Overdue' };
+
+    let reviewText = a.review_date
+      ? 'Next review: ' + fmtDate(a.review_date)
+      : 'No review date set';
+    if (a.completed_date) reviewText = 'Completed: ' + fmtDate(a.completed_date) + ' &nbsp;·&nbsp; ' + reviewText;
+
+    let actionBtn = '';
+    if (a.status === 'overdue') {
+      actionBtn = `<button class="act-btn act-btn-red" onclick="requestAssessment()">Book now</button>`;
+    } else if (a.status === 'due_soon') {
+      actionBtn = `<button class="act-btn act-btn-green" onclick="requestAssessment()">Book renewal</button>`;
+    } else {
+      actionBtn = `<button class="act-btn act-btn-neutral" onclick="viewDocuments()">View docs</button>`;
+    }
+
+    return `<div class="assess-row">
+      <div class="assess-icon ${iconClass[a.type] || 'icon-other'}">${icons[a.type] || '📄'}</div>
+      <div class="assess-info">
+        <div class="assess-name">${esc(a.title)}</div>
+        <div class="assess-date">${reviewText}</div>
+      </div>
+      <span class="pill pill-${a.status}">${statusLabel[a.status] || 'Unknown'}</span>
+      ${actionBtn}
+    </div>`;
+  }
+
+  function docRow(doc) {
+    const size = doc.file_size ? ' · ' + formatBytes(doc.file_size) : '';
+    return `<div class="doc-row">
+      <span class="doc-icon">📄</span>
+      <span class="doc-name" title="${esc(doc.original_name)}">${esc(doc.original_name)}</span>
+      <span class="doc-date">${fmtDate(doc.uploaded_at)}${size}</span>
+      <button class="act-btn act-btn-neutral" onclick="downloadDoc(${doc.id})">Download</button>
+    </div>`;
+  }
+
+  async function loadAllDocs() {
+    const res = await fetch('/api/client/documents');
+    if (!res.ok) return;
+    const docs = await res.json();
+    const el = document.getElementById('all-docs');
+    if (docs.length === 0) {
+      el.innerHTML = '<div class="empty">No documents uploaded yet.</div>';
+    } else {
+      el.innerHTML = docs.map(doc => docRow(doc)).join('');
+    }
+  }
+
+  function downloadDoc(id) {
+    window.location.href = `/api/client/documents/${id}/download`;
+  }
+
+  function requestAssessment() {
+    window.location.href = 'mailto:info@applegarthhealthandsafety.co.uk?subject=Assessment%20renewal%20request&body=Hi%20Jeremy%2C%0A%0AI%20would%20like%20to%20book%20a%20renewal%20assessment%20for%20my%20organisation.%0A%0AKind%20regards';
+  }
+
+  function switchTab(name, el) {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-dashboard').style.display = name === 'dashboard' ? '' : 'none';
+    document.getElementById('tab-documents').style.display = name === 'documents' ? '' : 'none';
+    if (name === 'documents') loadAllDocs();
+  }
+
+  function viewDocuments() {
+    switchTab('documents', document.querySelector('[data-tab=documents]'));
+  }
+
+  // Utilities
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtDate(s) {
+    if (!s) return '—';
+    try {
+      return new Date(s).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+    } catch (_) { return s; }
+  }
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b/1024).toFixed(0) + ' KB';
+    return (b/1048576).toFixed(1) + ' MB';
+  }
+  function scoreClass(s) { return s >= 70 ? 'good' : s >= 40 ? 'warn' : 'bad'; }
+  function scoreLabel(s) { return s >= 70 ? 'Good standing' : s >= 40 ? 'Needs attention' : 'Action required'; }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+  init();
+</script>
+</body>
+</html>
